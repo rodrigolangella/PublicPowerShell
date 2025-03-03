@@ -57,14 +57,14 @@ if ($msiProc.ExitCode -ne 0) {
 
 Write-Output "Sibelius MSI installed successfully."
 
-# Install the 23da95 MSI package
+# Install the Sibelius_Fonts MSI package
 $msi2Path = Join-Path -Path $PSScriptRoot -ChildPath "Sibelius_Fonts.msi"
 if (-Not (Test-Path $msi2Path)) {
     Write-Error "File $msi2Path not found. Aborting MSI installation."
     exit 1
 }
 
-Write-Output "Installing 23da95 MSI..."
+Write-Output "Installing Sibelius_Fonts MSI..."
 $msi2Arguments = "/i `"$msi2Path`" /qn /l*v `"$env:TEMP\Sibelius_Fonts.log`""
 $msi2Proc = Start-Process -FilePath "msiexec.exe" -ArgumentList $msi2Arguments -Wait -PassThru
 
