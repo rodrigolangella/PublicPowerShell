@@ -1,0 +1,39 @@
+# Set error handling
+$ErrorActionPreference = "Stop"
+
+# Uninstall the Sibelius MSI package
+$msiPath = Join-Path -Path $PSScriptRoot -ChildPath "Sibelius.msi"
+if (-Not (Test-Path $msiPath)) {
+    Write-Error "File $msiPath not found. Aborting uninstallation."
+    exit 1
+}
+
+Write-Output "Uninstalling Sibelius MSI..."
+$msiArguments = "/x `"$msiPath`" /qn /norestart /l*v `"$env:TEMP\Sibelius_Uninstall.log`""
+$msiProc = Start-Process -FilePath "msiexec.exe" -ArgumentList $msiArguments -Wait -PassThru
+
+if ($msiProc.ExitCode -ne 0) {
+    Write-Error "Sibelius MSI uninstallation failed with exit code $($msiProc.ExitCode)."
+    exit $msiProc.ExitCode
+}
+Write-Output "Sibelius MSI uninstalled successfully."
+
+# Uninstall the Sibelius_Fonts MSI package
+$msi2Path = Join-Path -Path $PSScriptRoot -ChildPath "Sibelius_Fonts.msi"
+if (-Not (Test-Path $msi2Path)) {
+    Write-Error "File $msi2Path not found. Aborting uninstallation."
+    exit 1
+}
+
+Write-Output "Uninstalling Sibelius_Fonts MSI..."
+$msi2Arguments = "/x `"$msi2Path`" /qn /norestart /l*v `"$env:TEMP\Sibelius_Fonts_Uninstall.log`""
+$msi2Proc = Start-Process -FilePath "msiexec.exe" -ArgumentList $msi2Arguments -Wait -PassThru
+
+if ($msi2Proc.ExitCode -ne 0) {
+    Write-Error "Sibelius_Fonts MSI uninstallation failed with exit code $($msi2Proc.ExitCode)."
+    exit $msi2Proc.ExitCode
+}
+Write-Output "Sibelius_Fonts MSI uninstalled successfully."
+
+Write-Output "Uninstallation completed successfully."
+exit 0
