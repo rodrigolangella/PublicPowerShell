@@ -1,0 +1,79 @@
+# Set error handling
+$ErrorActionPreference = "Stop"
+
+# Define the list of installers with their arguments
+$installers = @(
+    @{ FileName = "vcredist_2008_x64.exe"; Arguments = "/q /norestart" },
+    @{ FileName = "vcredist_2008_x86.exe"; Arguments = "/q /norestart" },
+    @{ FileName = "vcredist_2010_x64.exe"; Arguments = "/q /norestart" },
+    @{ FileName = "vcredist_2010_x86.exe"; Arguments = "/q /norestart" },    
+    @{ FileName = "vcredist_2012_x64.exe"; Arguments = "/quiet /norestart" },
+    @{ FileName = "vcredist_2013_x64.exe"; Arguments = "/quiet /norestart" },
+    @{ FileName = "vcredist_2013_x86.exe"; Arguments = "/quiet /norestart" }, 
+    @{ FileName = "vcredist_2017_x64.exe"; Arguments = "/quiet /norestart" },
+    @{ FileName = "vcredist_2017_x64-2.exe"; Arguments = "/quiet /norestart" },
+    @{ FileName = "vcredist_2017_x86.exe"; Arguments = "/quiet /norestart" }
+)
+
+# Install each Visual C++ Redistributable
+foreach ($installer in $installers) {
+    $installerPath = Join-Path -Path $PSScriptRoot -ChildPath $installer.FileName
+    if (-Not (Test-Path $installerPath)) {
+        Write-Error "File $installerPath not found. Aborting installation."
+        exit 1
+    }
+
+    Write-Output "Installing $($installer.FileName)..."
+    $proc = Start-Process -FilePath $installerPath -ArgumentList $installer.Arguments -Wait -PassThru
+
+    # Handle exit codes
+    switch ($proc.ExitCode) {
+        0     { Write-Output "$($installer.FileName) installed successfully." }
+        1638  { 
+            Write-Output "$($installer.FileName) is already installed. Continuing..."
+        }
+        default {
+            Write-Error "Installation of $($installer.FileName) failed with exit code $($proc.ExitCode). Aborting."
+            exit $proc.ExitCode
+        }
+    }
+}
+
+# Install the Sibelius MSI package
+$msiPath = Join-Path -Path $PSScriptRoot -ChildPath "Sibelius.msi"
+if (-Not (Test-Path $msiPath)) {
+    Write-Error "File $msiPath not found. Aborting MSI installation."
+    exit 1
+}
+
+Write-Output "Installing Sibelius MSI..."
+$msiArguments = "/i `"$msiPath`" /qn LSINFO=FQDN_OF_YOUR_LICENSE_SERVER /l*v `"$env:TEMP\AvidSibeliusx64.log`""
+$msiProc = Start-Process -FilePath "msiexec.exe" -ArgumentList $msiArguments -Wait -PassThru
+
+if ($msiProc.ExitCode -ne 0) {
+    Write-Error "Sibelius MSI installation failed with exit code $($msiProc.ExitCode)."
+    exit $msiProc.ExitCode
+}
+
+Write-Output "Sibelius MSI installed successfully."
+
+# Install the 23da95 MSI package
+$msi2Path = Join-Path -Path $PSScriptRoot -ChildPath "Sibelius_Fonts.msi"
+if (-Not (Test-Path $msi2Path)) {
+    Write-Error "File $msi2Path not found. Aborting MSI installation."
+    exit 1
+}
+
+Write-Output "Installing 23da95 MSI..."
+$msi2Arguments = "/i `"$msi2Path`" /qn /l*v `"$env:TEMP\Sibelius_Fonts.log`""
+$msi2Proc = Start-Process -FilePath "msiexec.exe" -ArgumentList $msi2Arguments -Wait -PassThru
+
+if ($msi2Proc.ExitCode -ne 0) {
+    Write-Error "Sibelius_Fonts MSI installation failed with exit code $($msi2Proc.ExitCode)."
+    exit $msi2Proc.ExitCode
+}
+
+Write-Output "Sibelius_Fonts MSI installed successfully."
+
+Write-Output "Installation completed successfully."
+exit 0
